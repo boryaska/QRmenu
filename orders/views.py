@@ -1,16 +1,143 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, UpdateView
+from django.views.generic import ListView, DetailView, UpdateView, View
 from django.db.models import Q, Count, Sum
 from django.utils import timezone
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from core.mixins import RestaurantOwnerMixin, PaginationMixin, SearchMixin
 from .models import Order, OrderItem
 from .forms import OrderUpdateForm, OrderFilterForm
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import json
+
+# === PUBLIC API VIEWS (для клиентов) ===
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateOrderAPIView(View):
+    """
+    API для создания заказа клиентом
+    """
+    def post(self, request, qr_data):
+        try:
+            # Получаем ресторан по QR-коду
+            from restaurants.models import RestaurantProfile
+            restaurant = get_object_or_404(RestaurantProfile, qr_data=qr_data, is_active=True)
+            
+            # Парсим данные заказа
+            data = json.loads(request.body)
+            
+            # Создаем заказ
+            order = Order.objects.create(
+                restaurant=restaurant,
+                customer_name=data.get('customer_name', ''),
+                customer_phone=data.get('customer_phone', ''),
+                customer_email=data.get('customer_email', ''),
+                table_number=data.get('table_number', ''),
+                special_requests=data.get('special_requests', ''),
+                qr_data=qr_data,
+                customer_ip=self.get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            # Добавляем позиции заказа
+            from menu.models import Dish
+            total_amount = Decimal('0.00')
+            
+            for item_data in data.get('items', []):
+                dish = get_object_or_404(Dish, id=item_data['dish_id'], restaurant=restaurant, is_available=True)
+                quantity = int(item_data.get('quantity', 1))
+                special_requests = item_data.get('special_requests', '')
+                
+                # Создаем позицию заказа
+                order_item = OrderItem.objects.create(
+                    order=order,
+                    dish=dish,
+                    quantity=quantity,
+                    unit_price=dish.price,
+                    special_requests=special_requests
+                )
+                
+                total_amount += order_item.get_total_price()
+            
+            # Обновляем сумму заказа
+            order.subtotal = total_amount
+            order.calculate_totals()
+            order.save()
+            
+            return JsonResponse({
+                'success': True,
+                'order_number': order.order_number,
+                'total_amount': float(order.total_amount),
+                'message': 'Заказ успешно создан!'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    def get_client_ip(self, request):
+        """Получает IP адрес клиента"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
+class DishDetailAPIView(DetailView):
+    """
+    API для получения детальной информации о блюде
+    """
+    def get(self, request, qr_data, dish_id):
+        try:
+            # Получаем ресторан и блюдо
+            from restaurants.models import RestaurantProfile
+            from menu.models import Dish
+            restaurant = get_object_or_404(RestaurantProfile, qr_data=qr_data, is_active=True)
+            dish = get_object_or_404(Dish, id=dish_id, restaurant=restaurant, is_available=True)
+            
+            # Формируем данные блюда
+            dish_data = {
+                'id': dish.id,
+                'name': dish.name,
+                'description': dish.description,
+                'ingredients': dish.ingredients,
+                'price': float(dish.price),
+                'image': dish.image.url if dish.image else None,
+                'calories': dish.calories,
+                'cooking_time': dish.cooking_time,
+                'weight': dish.weight,
+                'is_spicy': dish.is_spicy,
+                'is_vegetarian': dish.is_vegetarian,
+                'is_vegan': dish.is_vegan,
+                'options': []
+            }
+            
+            # Добавляем опции блюда
+            for option in dish.options.filter(is_available=True):
+                dish_data['options'].append({
+                    'id': option.id,
+                    'name': option.name,
+                    'price_modifier': float(option.price_modifier),
+                    'is_required': option.is_required
+                })
+            
+            return JsonResponse(dish_data)
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e)
+            }, status=404)
 
 
 class OrderListView(RestaurantOwnerMixin, SearchMixin, PaginationMixin, ListView):

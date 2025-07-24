@@ -7,7 +7,7 @@ from . import views
 app_name = 'orders'
 
 urlpatterns = [
-    # Основные страницы заказов
+    # Основные страницы заказов (для владельцев ресторанов)
     path('', views.OrderListView.as_view(), name='orders'),
     path('dashboard/', views.OrderDashboardView.as_view(), name='dashboard'),
     path('stats/', views.OrderStatsView.as_view(), name='stats'),
@@ -20,6 +20,6 @@ urlpatterns = [
     path('<int:pk>/status/', views.OrderStatusUpdateView.as_view(), name='order_status_update'),
     path('<int:pk>/payment/', views.OrderPaymentUpdateView.as_view(), name='order_payment_update'),
     
-    # API для AJAX обновлений
+    # API для AJAX обновлений (для владельцев)
     path('<int:pk>/api/status/', views.OrderStatusAPIView.as_view(), name='order_status_api'),
 ] 

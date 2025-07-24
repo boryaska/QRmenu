@@ -39,8 +39,11 @@ urlpatterns = [
     # Управление заказами
     path("dashboard/orders/", include("orders.urls")),
     
+    # Публичные API (для клиентов)
+    path("api/orders/", include("orders.api_urls")),
+    
     # Публичное меню (доступно по QR-коду)
-    path("m/", include("restaurants.urls", namespace="public")),
+    path("m/", include("restaurants.public_urls", namespace="public")),
 ]
 
 # Обслуживание медиа файлов в режиме разработки

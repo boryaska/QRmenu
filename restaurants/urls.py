@@ -7,7 +7,7 @@ from . import views
 app_name = 'restaurants'
 
 # Dashboard URLs (для владельцев ресторанов)
-dashboard_urlpatterns = [
+urlpatterns = [
     # Главная дашборда
     path('', views.DashboardView.as_view(), name='index'),
     
@@ -25,15 +25,4 @@ dashboard_urlpatterns = [
     
     # Аналитика
     path('analytics/', views.AnalyticsView.as_view(), name='analytics'),
-]
-
-# Public URLs (для клиентов по QR-коду)
-public_urlpatterns = [
-    # Публичное меню
-    path('<str:qr_data>/', views.PublicMenuView.as_view(), name='public_menu'),
-    path('<str:qr_data>/info/', views.PublicRestaurantInfoView.as_view(), name='public_info'),
-    path('<str:qr_data>/dish/<int:dish_id>/', views.PublicDishDetailView.as_view(), name='public_dish_detail'),
-]
-
-# Основные URL patterns
-urlpatterns = dashboard_urlpatterns + public_urlpatterns 
+] 

@@ -17,7 +17,7 @@
     </style>
 </head>
 
-<body class="h-full bg-gray-50" x-data="{ cartOpen: false, cart: [], cartTotal: 0 }">
+<body class="h-full bg-gray-50" x-data="menuApp()">
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,7 +63,7 @@
             <div class="mb-8">
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ category.name }}</h3>
                 <div class="grid gap-4">
-                    {% for dish in category.dishes.all %}
+                    {% for dish in category.available_dishes %}
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
@@ -72,13 +72,27 @@
                                 <p class="text-sm text-gray-600 mt-1">{{ dish.description }}</p>
                                 {% endif %}
                                 {% if dish.ingredients %}
-                                <p class="text-xs text-gray-500 mt-2">{{ dish.ingredients }}</p>
+                                <p class="text-xs text-gray-500 mt-2">Состав: {{ dish.ingredients }}</p>
                                 {% endif %}
+                                
+                                <!-- Badges -->
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    {% if dish.is_spicy %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">🌶️ Острое</span>{% endif %}
+                                    {% if dish.is_vegetarian %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">🥬 Вегетарианское</span>{% endif %}
+                                    {% if dish.is_new %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">✨ Новинка</span>{% endif %}
+                                    {% if dish.is_popular %}<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⭐ Популярное</span>{% endif %}
+                                </div>
+
                                 <div class="flex items-center justify-between mt-3">
-                                    <span class="text-lg font-semibold text-indigo-600">
-                                        {{ dish.price }} {{ restaurant.currency }}
-                                    </span>
-                                    <button @click="addToCart({{ dish.id }}, '{{ dish.name }}', {{ dish.price }})"
+                                    <div>
+                                        <span class="text-lg font-semibold text-indigo-600">
+                                            {{ dish.get_formatted_price }}
+                                        </span>
+                                        {% if dish.weight %}
+                                        <span class="text-sm text-gray-500 ml-2">{{ dish.weight }}г</span>
+                                        {% endif %}
+                                    </div>
+                                    <button @click="addToCart({{ dish.id }}, '{{ dish.name|escapejs }}', {{ dish.price }})"
                                             class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                         Добавить
                                     </button>
@@ -189,10 +203,26 @@
                                 <div class="flex items-center justify-between border-b border-gray-200 pb-4">
                                     <div class="flex-1">
                                         <h4 x-text="item.name" class="text-sm font-medium text-gray-900"></h4>
-                                        <p x-text="`${item.price} {{ restaurant.currency }}`" class="text-sm text-gray-500"></p>
+                                        <p class="text-sm text-gray-500">
+                                            <span x-text="item.price"></span> ₽ × <span x-text="item.quantity"></span>
+                                        </p>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <button @click="removeFromCart(item.id)" class="text-red-600 hover:text-red-500">
+                                        <button @click="updateQuantity(item.id, item.quantity - 1)" 
+                                                class="text-gray-400 hover:text-gray-600"
+                                                :disabled="item.quantity <= 1">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                            </svg>
+                                        </button>
+                                        <span x-text="item.quantity" class="text-sm font-medium min-w-[20px] text-center"></span>
+                                        <button @click="updateQuantity(item.id, item.quantity + 1)" 
+                                                class="text-gray-400 hover:text-gray-600">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </button>
+                                        <button @click="removeFromCart(item.id)" class="text-red-600 hover:text-red-500 ml-2">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
@@ -207,39 +237,243 @@
                     <div x-show="cart.length > 0" class="border-t border-gray-200 px-4 py-6">
                         <div class="flex justify-between text-base font-medium text-gray-900 mb-4">
                             <p>Итого:</p>
-                            <p x-text="`${cartTotal} {{ restaurant.currency }}`"></p>
+                            <p><span x-text="cartTotal"></span> ₽</p>
                         </div>
-                        <button class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button @click="showOrderForm = true; cartOpen = false"
+                                class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Оформить заказ
                         </button>
-                        <p class="text-xs text-gray-500 text-center mt-2">
-                            Свяжитесь с персоналом для оформления заказа
-                        </p>
                     </div>
                 </div>
             </section>
         </div>
     </div>
 
+    <!-- Order Form Modal -->
+    <div x-show="showOrderForm" 
+         x-cloak
+         class="fixed inset-0 overflow-hidden z-50">
+        <div class="absolute inset-0 overflow-hidden">
+            <div @click="showOrderForm = false" class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            
+            <section class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+                <div class="flex h-full flex-col">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-6 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Оформление заказа</h2>
+                        <button @click="showOrderForm = false" class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Form -->
+                    <div class="flex-1 overflow-y-auto px-4 py-6">
+                        <form @submit.prevent="submitOrder()">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Имя</label>
+                                    <input type="text" x-model="orderForm.customer_name" 
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Телефон *</label>
+                                    <input type="tel" x-model="orderForm.customer_phone" required
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                                    <input type="email" x-model="orderForm.customer_email" 
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Номер стола</label>
+                                    <input type="text" x-model="orderForm.table_number" 
+                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                           placeholder="Например: 5, А12">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Комментарий к заказу</label>
+                                    <textarea x-model="orderForm.special_requests" rows="3"
+                                              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                              placeholder="Особые пожелания или аллергии"></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Summary -->
+                            <div class="mt-6 border-t border-gray-200 pt-4">
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Ваш заказ:</h3>
+                                <div class="space-y-2 text-sm">
+                                    <template x-for="item in cart" :key="item.id">
+                                        <div class="flex justify-between">
+                                            <span><span x-text="item.name"></span> × <span x-text="item.quantity"></span></span>
+                                            <span><span x-text="item.price * item.quantity"></span> ₽</span>
+                                        </div>
+                                    </template>
+                                    <div class="flex justify-between font-medium border-t border-gray-200 pt-2">
+                                        <span>Итого:</span>
+                                        <span><span x-text="cartTotal"></span> ₽</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <button type="submit" 
+                                        :disabled="isSubmitting"
+                                        class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                                    <span x-show="!isSubmitting">Подтвердить заказ</span>
+                                    <span x-show="isSubmitting">Отправка...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="orderSuccess" 
+         x-cloak
+         class="fixed inset-0 overflow-hidden z-50">
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            
+            <div class="absolute inset-0 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">Заказ принят!</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Номер заказа: <strong x-text="orderNumber"></strong>
+                        </p>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Персонал ресторана свяжется с вами для подтверждения
+                        </p>
+                        <button @click="resetOrder()" 
+                                class="mt-4 w-full bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700">
+                            Закрыть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function addToCart(id, name, price) {
-            // Простая корзина без Alpine.js store для демонстрации
-            const existingItem = this.cart.find(item => item.id === id);
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                this.cart.push({ id, name, price, quantity: 1 });
+        function menuApp() {
+            return {
+                cartOpen: false,
+                showOrderForm: false,
+                orderSuccess: false,
+                isSubmitting: false,
+                cart: [],
+                cartTotal: 0,
+                orderNumber: '',
+                orderForm: {
+                    customer_name: '',
+                    customer_phone: '',
+                    customer_email: '',
+                    table_number: '',
+                    special_requests: ''
+                },
+
+                addToCart(dishId, dishName, dishPrice) {
+                    const existingItem = this.cart.find(item => item.id === dishId);
+                    if (existingItem) {
+                        existingItem.quantity += 1;
+                    } else {
+                        this.cart.push({
+                            id: dishId,
+                            name: dishName,
+                            price: dishPrice,
+                            quantity: 1
+                        });
+                    }
+                    this.updateCartTotal();
+                },
+
+                removeFromCart(dishId) {
+                    this.cart = this.cart.filter(item => item.id !== dishId);
+                    this.updateCartTotal();
+                },
+
+                updateQuantity(dishId, newQuantity) {
+                    if (newQuantity <= 0) {
+                        this.removeFromCart(dishId);
+                        return;
+                    }
+                    const item = this.cart.find(item => item.id === dishId);
+                    if (item) {
+                        item.quantity = newQuantity;
+                        this.updateCartTotal();
+                    }
+                },
+
+                updateCartTotal() {
+                    this.cartTotal = this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                },
+
+                async submitOrder() {
+                    if (this.isSubmitting || this.cart.length === 0) return;
+                    
+                    this.isSubmitting = true;
+                    
+                    const orderData = {
+                        ...this.orderForm,
+                        items: this.cart.map(item => ({
+                            dish_id: item.id,
+                            quantity: item.quantity
+                        }))
+                    };
+
+                    try {
+                        const response = await fetch('/api/orders/api/{{ qr_data }}/create/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(orderData)
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            this.orderNumber = result.order_number;
+                            this.showOrderForm = false;
+                            this.orderSuccess = true;
+                        } else {
+                            alert('Ошибка при создании заказа: ' + (result.error || 'Неизвестная ошибка'));
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Ошибка при отправке заказа. Попробуйте еще раз.');
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                },
+
+                resetOrder() {
+                    this.cart = [];
+                    this.cartTotal = 0;
+                    this.orderForm = {
+                        customer_name: '',
+                        customer_phone: '',
+                        customer_email: '',
+                        table_number: '',
+                        special_requests: ''
+                    };
+                    this.orderSuccess = false;
+                    this.showOrderForm = false;
+                }
             }
-            this.updateCartTotal();
-        }
-        
-        function removeFromCart(id) {
-            this.cart = this.cart.filter(item => item.id !== id);
-            this.updateCartTotal();
-        }
-        
-        function updateCartTotal() {
-            this.cartTotal = this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
         }
     </script>
 </body>

@@ -230,10 +230,24 @@ class PublicMenuView(DetailView):
         context = super().get_context_data(**kwargs)
         restaurant = self.object
         
-        # Здесь будет логика получения меню (категории и блюда)
-        # Пока заглушка
-        context['categories'] = []  # restaurant.categories.filter(is_active=True)
-        context['dishes'] = []      # restaurant.dishes.filter(is_available=True)
+        # Получаем активные категории с блюдами
+        from menu.models import Category
+        categories = Category.objects.filter(
+            restaurant=restaurant,
+            is_active=True
+        ).prefetch_related(
+            'dishes'
+        ).order_by('sort_order', 'name')
+        
+        # Добавляем только категории, у которых есть доступные блюда
+        categories_with_dishes = []
+        for category in categories:
+            available_dishes = category.dishes.filter(is_available=True).order_by('sort_order', 'name')
+            if available_dishes.exists():
+                category.available_dishes = available_dishes
+                categories_with_dishes.append(category)
+        
+        context['categories'] = categories_with_dishes
         context['qr_data'] = restaurant.qr_data
         
         return context
