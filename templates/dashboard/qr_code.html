@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}QR-код меню - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">QR-код меню</h1>
+        <p class="mt-2 text-gray-600">Управляйте QR-кодом для вашего ресторана {{ restaurant.name }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- QR-код -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Ваш QR-код</h3>
+            </div>
+            <div class="px-6 py-4 text-center">
+                {% if has_qr_code %}
+                    <img src="{{ restaurant.qr_code.url }}" alt="QR-код меню" 
+                         class="mx-auto h-64 w-64 border rounded-lg shadow-sm">
+                {% else %}
+                    <div class="mx-auto h-64 w-64 bg-gray-100 border rounded-lg flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fas fa-qrcode text-6xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-500">QR-код не сгенерирован</p>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-6 space-y-3">
+                    {% if has_qr_code %}
+                        <a href="{% url 'dashboard:qr_code_download' %}" 
+                           class="block w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
+                            <i class="fas fa-download mr-2"></i>
+                            Скачать QR-код
+                        </a>
+                        
+                        <form method="post" class="w-full">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                                <i class="fas fa-sync-alt mr-2"></i>
+                                Перегенерировать QR-код
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" class="w-full">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                                <i class="fas fa-magic mr-2"></i>
+                                Сгенерировать QR-код
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация и инструкции -->
+        <div class="space-y-6">
+            <!-- Ссылка на меню -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Ссылка на меню</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-sm text-gray-500 mb-3">Ваше публичное меню доступно по этой ссылке:</p>
+                    <div class="flex">
+                        <input type="text" 
+                               value="{{ menu_url }}" 
+                               readonly
+                               id="menu-url-input"
+                               class="flex-1 block w-full rounded-l-md border-gray-300 bg-gray-50 text-sm">
+                        <button onclick="copyMenuUrl()"
+                                class="relative -ml-px inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <a href="{{ menu_url }}" target="_blank"
+                       class="mt-3 block w-full bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 text-center">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Открыть меню
+                    </a>
+                </div>
+            </div>
+
+            <!-- Инструкции -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="px-6 py-4">
+                    <h4 class="text-lg font-medium text-blue-900 mb-4">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Как использовать QR-код
+                    </h4>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-blue-800">
+                        <li>Скачайте QR-код, нажав кнопку "Скачать QR-код"</li>
+                        <li>Распечатайте QR-код на качественной бумаге</li>
+                        <li>Разместите QR-коды на столах в вашем ресторане</li>
+                        <li>Клиенты сканируют код и видят актуальное меню</li>
+                        <li>Обновления меню отображаются автоматически</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Технические детали -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Технические детали</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="space-y-3">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Уникальный ID</dt>
+                            <dd class="text-sm text-gray-900 font-mono">{{ qr_data }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Формат</dt>
+                            <dd class="text-sm text-gray-900">PNG, 300x300 пикселей</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Статус</dt>
+                            <dd class="text-sm">
+                                {% if has_qr_code %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Сгенерирован
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Не создан
+                                    </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Рекомендации -->
+            <div class="bg-green-50 border border-green-200 rounded-lg">
+                <div class="px-6 py-4">
+                    <h4 class="text-lg font-medium text-green-900 mb-4">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        Рекомендации
+                    </h4>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-green-800">
+                        <li>Размещайте QR-коды на каждом столе для удобства гостей</li>
+                        <li>Добавьте краткую инструкцию: "Наведите камеру телефона на QR-код"</li>
+                        <li>Защитите QR-коды от влаги ламинированием</li>
+                        <li>Регулярно проверяйте работоспособность QR-кодов</li>
+                        <li>Разместите резервные QR-коды рядом с кассой</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="mt-8 flex justify-between items-center">
+        <a href="{% url 'dashboard:profile' %}" 
+           class="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Назад к профилю
+        </a>
+        
+        <div class="space-x-3">
+            <a href="{% url 'dashboard:index' %}" 
+               class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                <i class="fas fa-home mr-2"></i>
+                Дашборд
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyMenuUrl() {
+    const input = document.getElementById('menu-url-input');
+    input.select();
+    input.setSelectionRange(0, 99999); // Для мобильных устройств
+    
+    navigator.clipboard.writeText(input.value).then(function() {
+        // Показываем уведомление об успешном копировании
+        const button = event.target.closest('button');
+        const originalHTML = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-check text-green-500"></i>';
+        button.classList.add('bg-green-100', 'border-green-300');
+        
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('bg-green-100', 'border-green-300');
+        }, 2000);
+    }).catch(function() {
+        // Fallback для старых браузеров
+        alert('Ссылка скопирована: ' + input.value);
+    });
+}
+</script>
+{% endblock %} 

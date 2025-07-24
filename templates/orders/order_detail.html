@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ #{{ order.order_number }} - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-start mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Заказ #{{ order.order_number }}</h1>
+            <p class="text-gray-600">{{ order.created_at|date:"d.m.Y в H:i" }}</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                {% elif order.status == 'confirmed' %}bg-blue-100 text-blue-800
+                {% elif order.status == 'preparing' %}bg-orange-100 text-orange-800
+                {% elif order.status == 'ready' %}bg-green-100 text-green-800
+                {% elif order.status == 'completed' %}bg-gray-100 text-gray-800
+                {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                {% endif %}">
+                {{ order.get_status_display }}
+            </span>
+            
+            {% if order.is_paid %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Оплачен
+                </span>
+            {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    Не оплачен
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Состав заказа</h3>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for item in order.items.all %}
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-medium text-gray-900">{{ item.dish.name }}</h4>
+                            {% if item.special_instructions %}
+                                <p class="text-sm text-gray-500">{{ item.special_instructions }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">{{ item.quantity }} × {{ item.unit_price }} ₽</p>
+                            <p class="text-sm text-gray-500">= {{ item.total_price }} ₽</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-medium text-gray-900">Итого:</span>
+                        <span class="text-lg font-bold text-gray-900">{{ order.total_amount }} ₽</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Информация о клиенте</h3>
+                <dl class="space-y-2">
+                    {% if order.customer_name %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Имя</dt>
+                        <dd class="text-sm text-gray-900">{{ order.customer_name }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if order.customer_phone %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Телефон</dt>
+                        <dd class="text-sm text-gray-900">{{ order.customer_phone }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if order.table_number %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Стол</dt>
+                        <dd class="text-sm text-gray-900">{{ order.table_number }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 flex justify-between">
+        <a href="{% url 'orders:orders' %}" 
+           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+            К списку заказов
+        </a>
+    </div>
+</div>
+{% endblock %}

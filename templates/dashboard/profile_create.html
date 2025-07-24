@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Создать ресторан - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Создать профиль ресторана</h1>
+        <p class="mt-2 text-gray-600">Заполните информацию о вашем ресторане для создания QR-меню</p>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-lg">
+        <form method="post" enctype="multipart/form-data" class="space-y-6 p-6">
+            {% csrf_token %}
+
+            <!-- Основная информация -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Основная информация</h3>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.name.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Краткое описание вашего ресторана</p>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.logo.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.logo.label }}
+                        </label>
+                        {{ form.logo }}
+                        {% if form.logo.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.logo.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Логотип ресторана (JPG, PNG, до 5MB)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Контактная информация -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Контактная информация</h3>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.address.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.phone.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.email.label }}
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.website.label }}
+                        </label>
+                        {{ form.website }}
+                        {% if form.website.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.website.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Настройки меню -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Настройки меню</h3>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    <div>
+                        <label for="{{ form.currency.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.currency.label }}
+                        </label>
+                        {{ form.currency }}
+                        {% if form.currency.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.currency.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.tax_rate.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.tax_rate.label }}
+                        </label>
+                        {{ form.tax_rate }}
+                        {% if form.tax_rate.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tax_rate.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Например: 10.00 для 10%</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.service_charge.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.service_charge.label }}
+                        </label>
+                        {{ form.service_charge }}
+                        {% if form.service_charge.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.service_charge.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Например: 5.00 для 5%</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.table_prefix.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.table_prefix.label }}
+                        </label>
+                        {{ form.table_prefix }}
+                        {% if form.table_prefix.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.table_prefix.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="hidden" name="{{ form.is_active.name }}" value="false">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                            {{ form.is_active.label }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма ошибок -->
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                Ошибки формы:
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Кнопки -->
+            <div class="flex justify-end space-x-3 pt-6">
+                <a href="{% url 'accounts:profile' %}" 
+                   class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Отмена
+                </a>
+                <button type="submit" 
+                        class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-save mr-2"></i>
+                    Создать ресторан
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Информационный блок -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">
+                    Что произойдет после создания?
+                </h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Автоматически сгенерируется уникальный QR-код для вашего меню</li>
+                        <li>Вы получите доступ к панели управления рестораном</li>
+                        <li>Сможете добавлять категории и блюда в меню</li>
+                        <li>Клиенты смогут сканировать QR-код и просматривать меню</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

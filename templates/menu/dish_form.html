@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Редактировать блюдо{% else %}Новое блюдо{% endif %} - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">
+        {% if object %}Редактировать блюдо{% else %}Новое блюдо{% endif %}
+    </h1>
+
+    {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Ошибки формы:</h3>
+                <div class="mt-2 text-sm text-red-700">{{ form.non_field_errors }}</div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Обнаружены ошибки:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    {% for field, errors in form.errors.items %}
+                        <div class="mb-2">
+                            <strong>{{ field }}:</strong>
+                            {% for error in errors %}<div>{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="bg-white shadow rounded-lg">
+        <form method="post" enctype="multipart/form-data" class="space-y-6 p-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.category.label }} *</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}<p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>{% endif %}
+                    {% if form.category.help_text %}<p class="mt-1 text-sm text-gray-500">{{ form.category.help_text }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.name.label }} *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.price.label }} *</label>
+                    {{ form.price }}
+                    {% if form.price.errors %}<p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.image.label }}</label>
+                    {{ form.image }}
+                    {% if form.image.errors %}<p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center">
+                    {{ form.is_available }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_available.label }}</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.is_popular }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_popular.label }}</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.is_vegetarian }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_vegetarian.label }}</span>
+                </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-6">
+                <a href="{% url 'menu:dishes' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Отмена
+                </a>
+                <button type="submit" class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700">
+                    {% if object %}Обновить{% else %}Создать{% endif %} блюдо
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

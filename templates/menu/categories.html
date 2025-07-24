@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Категории меню - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Категории меню
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Управляйте категориями блюд вашего ресторана
+            </p>
+        </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4">
+            <a href="{% url 'menu:category_create' %}" 
+               class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                <i class="fas fa-plus mr-2"></i>
+                Добавить категорию
+            </a>
+        </div>
+    </div>
+
+    {% if categories %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul class="divide-y divide-gray-200">
+                {% for category in categories %}
+                <li>
+                    <div class="px-4 py-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="flex items-center">
+                                    <p class="text-sm font-medium text-gray-900">{{ category.name }}</p>
+                                    {% if not category.is_active %}
+                                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            Неактивна
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if category.description %}
+                                    <p class="text-sm text-gray-500">{{ category.description|truncatewords:15 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'menu:category_edit' category.pk %}" 
+                               class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'menu:category_delete' category.pk %}" 
+                               class="text-red-600 hover:text-red-900"
+                               onclick="return confirm('Удалить категорию {{ category.name }}?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-list text-6xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Нет категорий</h3>
+            <p class="text-gray-500 mb-6">
+                Начните с создания первой категории блюд.
+            </p>
+            <a href="{% url 'menu:category_create' %}" 
+               class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                <i class="fas fa-plus mr-2"></i>
+                Создать категорию
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

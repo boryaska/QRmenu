@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ restaurant.name }} - Меню</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+
+<body class="h-full bg-gray-50" x-data="{ cartOpen: false, cart: [], cartTotal: 0 }">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Restaurant info -->
+                <div class="flex items-center">
+                    {% if restaurant.logo %}
+                    <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="h-10 w-10 rounded-full mr-3">
+                    {% else %}
+                    <div class="h-10 w-10 bg-indigo-600 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-bold text-lg">{{ restaurant.name.0 }}</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="text-lg font-semibold text-gray-900">{{ restaurant.name }}</h1>
+                        {% if restaurant.description %}
+                        <p class="text-sm text-gray-500 hidden sm:block">{{ restaurant.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Cart button -->
+                <button @click="cartOpen = true" 
+                        class="relative bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h12a1 1 0 001-1v-6M9 17v1a3 3 0 003 3h0a3 3 0 003-3v-1" />
+                    </svg>
+                    <span x-text="cart.length" 
+                          x-show="cart.length > 0"
+                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% if categories %}
+        <!-- Categories -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Наше меню</h2>
+            {% for category in categories %}
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ category.name }}</h3>
+                <div class="grid gap-4">
+                    {% for dish in category.dishes.all %}
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="text-lg font-medium text-gray-900">{{ dish.name }}</h4>
+                                {% if dish.description %}
+                                <p class="text-sm text-gray-600 mt-1">{{ dish.description }}</p>
+                                {% endif %}
+                                {% if dish.ingredients %}
+                                <p class="text-xs text-gray-500 mt-2">{{ dish.ingredients }}</p>
+                                {% endif %}
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-lg font-semibold text-indigo-600">
+                                        {{ dish.price }} {{ restaurant.currency }}
+                                    </span>
+                                    <button @click="addToCart({{ dish.id }}, '{{ dish.name }}', {{ dish.price }})"
+                                            class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Добавить
+                                    </button>
+                                </div>
+                            </div>
+                            {% if dish.image %}
+                            <div class="ml-4 flex-shrink-0">
+                                <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="h-20 w-20 object-cover rounded-md">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Меню готовится</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                Ресторан еще не добавил блюда в меню. Свяжитесь с персоналом для получения информации.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Restaurant info -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Контактная информация</h3>
+            <div class="space-y-3">
+                {% if restaurant.address %}
+                <div class="flex items-start">
+                    <svg class="h-5 w-5 text-gray-400 mt-0.5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="text-sm text-gray-600">{{ restaurant.address }}</span>
+                </div>
+                {% endif %}
+                
+                {% if restaurant.phone %}
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <a href="tel:{{ restaurant.phone }}" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        {{ restaurant.phone }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if restaurant.email %}
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <a href="mailto:{{ restaurant.email }}" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        {{ restaurant.email }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if restaurant.website %}
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c-5 0-9-4-9-9s4-9 9-9" />
+                    </svg>
+                    <a href="{{ restaurant.website }}" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        Веб-сайт
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div x-show="cartOpen" 
+         x-cloak
+         class="fixed inset-0 overflow-hidden z-50">
+        <div class="absolute inset-0 overflow-hidden">
+            <div @click="cartOpen = false" class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            
+            <section class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+                <div class="flex h-full flex-col">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-6 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Ваш заказ</h2>
+                        <button @click="cartOpen = false" class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Cart Items -->
+                    <div class="flex-1 overflow-y-auto px-4 py-6">
+                        <div x-show="cart.length === 0" class="text-center text-gray-500">
+                            Корзина пуста
+                        </div>
+                        
+                        <div x-show="cart.length > 0" class="space-y-4">
+                            <template x-for="item in cart" :key="item.id">
+                                <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+                                    <div class="flex-1">
+                                        <h4 x-text="item.name" class="text-sm font-medium text-gray-900"></h4>
+                                        <p x-text="`${item.price} {{ restaurant.currency }}`" class="text-sm text-gray-500"></p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="removeFromCart(item.id)" class="text-red-600 hover:text-red-500">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div x-show="cart.length > 0" class="border-t border-gray-200 px-4 py-6">
+                        <div class="flex justify-between text-base font-medium text-gray-900 mb-4">
+                            <p>Итого:</p>
+                            <p x-text="`${cartTotal} {{ restaurant.currency }}`"></p>
+                        </div>
+                        <button class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Оформить заказ
+                        </button>
+                        <p class="text-xs text-gray-500 text-center mt-2">
+                            Свяжитесь с персоналом для оформления заказа
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function addToCart(id, name, price) {
+            // Простая корзина без Alpine.js store для демонстрации
+            const existingItem = this.cart.find(item => item.id === id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                this.cart.push({ id, name, price, quantity: 1 });
+            }
+            this.updateCartTotal();
+        }
+        
+        function removeFromCart(id) {
+            this.cart = this.cart.filter(item => item.id !== id);
+            this.updateCartTotal();
+        }
+        
+        function updateCartTotal() {
+            this.cartTotal = this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+    </script>
+</body>
+</html> 

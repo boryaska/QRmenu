@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказы - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">
+            Заказы
+        </h2>
+        <p class="mt-1 text-sm text-gray-500">
+            Управляйте заказами вашего ресторана
+        </p>
+    </div>
+
+    {% if orders %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul class="divide-y divide-gray-200">
+                {% for order in orders %}
+                <li>
+                    <div class="px-4 py-4 flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <a href="{% url 'orders:order_detail' order.pk %}" 
+                                       class="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                                        #{{ order.order_number }}
+                                    </a>
+                                    
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% elif order.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                        {% elif order.status == 'preparing' %}bg-orange-100 text-orange-800
+                                        {% elif order.status == 'ready' %}bg-green-100 text-green-800
+                                        {% elif order.status == 'completed' %}bg-gray-100 text-gray-800
+                                        {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                                        {% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+
+                                    {% if order.is_paid %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Оплачен
+                                        </span>
+                                    {% else %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                            Не оплачен
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mt-1">
+                                    {% if order.customer_name %}
+                                        <p class="text-sm text-gray-600">{{ order.customer_name }}</p>
+                                    {% endif %}
+                                    {% if order.table_number %}
+                                        <p class="text-sm text-gray-500">Стол {{ order.table_number }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mt-1 flex items-center text-xs text-gray-500 space-x-4">
+                                    <span>{{ order.total_amount }} ₽</span>
+                                    <span>{{ order.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 ml-4">
+                            <a href="{% url 'orders:order_detail' order.pk %}" 
+                               class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-shopping-cart text-6xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Нет заказов</h3>
+            <p class="text-gray-500">
+                Заказы появятся, когда клиенты начнут заказывать через QR-код.
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
