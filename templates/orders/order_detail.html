@@ -33,30 +33,108 @@
         </div>
     </div>
 
+    <!-- Панель управления статусом -->
+    {% if order.status != 'completed' and order.status != 'cancelled' %}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">🔧 Управление заказом</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Изменение статуса -->
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Статус заказа</h4>
+                <div class="space-y-2">
+                    {% if order.status == 'pending' %}
+                        <button onclick="updateStatus('confirmed')" 
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            ✅ Подтвердить заказ
+                        </button>
+                        <button onclick="updateStatus('cancelled')" 
+                                class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                            ❌ Отменить заказ
+                        </button>
+                    {% elif order.status == 'confirmed' %}
+                        <button onclick="updateStatus('preparing')" 
+                                class="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition">
+                            👨‍🍳 Начать готовить
+                        </button>
+                        <button onclick="updateStatus('cancelled')" 
+                                class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                            ❌ Отменить заказ
+                        </button>
+                    {% elif order.status == 'preparing' %}
+                        <button onclick="updateStatus('ready')" 
+                                class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                            🍽️ Заказ готов
+                        </button>
+                    {% elif order.status == 'ready' %}
+                        <button onclick="updateStatus('completed')" 
+                                class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
+                            ✅ Заказ выдан
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Управление оплатой -->
+            {% if not order.is_paid %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Оплата</h4>
+                <div class="space-y-2">
+                    <button onclick="updatePayment('cash')" 
+                            class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                        💵 Оплачено наличными
+                    </button>
+                    <button onclick="updatePayment('card')" 
+                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                        💳 Оплачено картой
+                    </button>
+                    <button onclick="updatePayment('online')" 
+                            class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
+                        📱 Онлайн оплата
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Оплата</h4>
+                <div class="flex items-center justify-center p-4 bg-green-50 rounded-lg">
+                    <span class="text-green-600 font-medium">
+                        ✅ Заказ оплачен
+                        {% if order.payment_method %}
+                            ({{ order.get_payment_method_display }})
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Основная информация о заказе -->
         <div class="lg:col-span-2">
             <div class="bg-white shadow rounded-lg">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Состав заказа</h3>
+                    <h3 class="text-lg font-medium text-gray-900">Позиции заказа</h3>
                 </div>
-                <div class="divide-y divide-gray-200">
+                <div class="p-6">
                     {% for item in order.items.all %}
-                    <div class="px-6 py-4 flex justify-between items-center">
+                    <div class="flex justify-between items-start py-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
                         <div class="flex-1">
                             <h4 class="text-sm font-medium text-gray-900">{{ item.dish.name }}</h4>
-                            {% if item.special_instructions %}
-                                <p class="text-sm text-gray-500">{{ item.special_instructions }}</p>
+                            {% if item.dish.description %}
+                            <p class="text-sm text-gray-600 mt-1">{{ item.dish.description }}</p>
                             {% endif %}
+                            <p class="text-sm text-gray-500">Количество: {{ item.quantity }}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">{{ item.quantity }} × {{ item.unit_price }} ₽</p>
-                            <p class="text-sm text-gray-500">= {{ item.total_price }} ₽</p>
-                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ item.total_price }} ₽</span>
                     </div>
+                    {% empty %}
+                    <p class="text-gray-500">В заказе нет позиций</p>
                     {% endfor %}
-                </div>
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                    <div class="flex justify-between items-center">
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
                         <span class="text-lg font-medium text-gray-900">Итого:</span>
                         <span class="text-lg font-bold text-gray-900">{{ order.total_amount }} ₽</span>
                     </div>
@@ -86,6 +164,12 @@
                         <dd class="text-sm text-gray-900">{{ order.table_number }}</dd>
                     </div>
                     {% endif %}
+                    {% if order.special_requests %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Особые пожелания</dt>
+                        <dd class="text-sm text-gray-900">{{ order.special_requests }}</dd>
+                    </div>
+                    {% endif %}
                 </dl>
             </div>
         </div>
@@ -94,8 +178,120 @@
     <div class="mt-8 flex justify-between">
         <a href="{% url 'orders:orders' %}" 
            class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
-            К списку заказов
+            ← К списку заказов
         </a>
     </div>
 </div>
+
+<!-- Уведомления -->
+<div id="notification" class="fixed top-4 right-4 z-50 hidden">
+    <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <span id="notification-text"></span>
+    </div>
+</div>
+
+<!-- Данные для JavaScript -->
+<div id="order-data" data-order-id="{{ order.pk }}" style="display: none;"></div>
+
+<script>
+// Получение CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Показать уведомление
+function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notification-text');
+    
+    notificationText.textContent = message;
+    
+    // Изменяем цвет в зависимости от типа
+    const notificationDiv = notification.querySelector('div');
+    if (type === 'success') {
+        notificationDiv.className = 'bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg';
+    } else if (type === 'error') {
+        notificationDiv.className = 'bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
+    }
+    
+    notification.classList.remove('hidden');
+    
+    // Автоматически скрыть через 3 секунды
+    setTimeout(function() {
+        notification.classList.add('hidden');
+    }, 3000);
+}
+
+// Обновить статус заказа
+function updateStatus(newStatus) {
+    const orderId = document.getElementById('order-data').getAttribute('data-order-id');
+    
+    fetch('/dashboard/orders/' + orderId + '/api/status/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: 'status=' + newStatus
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Перезагрузить страницу через 1 секунду
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Произошла ошибка', 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showNotification('Произошла ошибка при обновлении статуса', 'error');
+    });
+}
+
+// Обновить оплату заказа
+function updatePayment(paymentMethod) {
+    const orderId = document.getElementById('order-data').getAttribute('data-order-id');
+    
+    fetch('/dashboard/orders/' + orderId + '/payment/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: 'payment_method=' + paymentMethod
+    })
+    .then(function(response) {
+        if (response.ok) {
+            showNotification('Заказ отмечен как оплаченный', 'success');
+            // Перезагрузить страницу через 1 секунду
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification('Произошла ошибка при обновлении оплаты', 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showNotification('Произошла ошибка при обновлении оплаты', 'error');
+    });
+}
+</script>
 {% endblock %}
