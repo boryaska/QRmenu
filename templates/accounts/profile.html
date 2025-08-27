@@ -53,9 +53,55 @@
                             <dt class="text-sm font-medium text-gray-500">Статус аккаунта</dt>
                             <dd class="mt-1">
                                 {% if user.is_active %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Активен
-                                    </span>
+                                    {% if user.is_restaurant_owner %}
+                                        {% if user.restaurant_verification %}
+                                            {% if user.restaurant_verification.status == 'pending' %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    Ожидает верификации
+                                                </span>
+                                            {% elif user.restaurant_verification.status == 'approved' %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <i class="fas fa-check-circle mr-1"></i>
+                                                    Верифицирован
+                                                </span>
+                                            {% elif user.restaurant_verification.status == 'rejected' %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    <i class="fas fa-times-circle mr-1"></i>
+                                                    Верификация отклонена
+                                                </span>
+                                            {% elif user.restaurant_verification.status == 'requires_changes' %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                    Требуются изменения
+                                                </span>
+                                            {% endif %}
+                                            {% if user.restaurant_verification.status != 'approved' %}
+                                                <div class="mt-2">
+                                                    <a href="{% url 'verification:status' %}"
+                                                       class="text-xs text-indigo-600 hover:text-indigo-500">
+                                                        Проверить статус →
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <i class="fas fa-file-alt mr-1"></i>
+                                                Заявка не подана
+                                            </span>
+                                            <div class="mt-2">
+                                                <a href="{% url 'verification:create' %}"
+                                                   class="text-xs text-indigo-600 hover:text-indigo-500">
+                                                    Подать заявку →
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-user mr-1"></i>
+                                            Клиент (активен)
+                                        </span>
+                                    {% endif %}
                                 {% else %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                         Неактивен

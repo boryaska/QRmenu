@@ -72,6 +72,56 @@
                         <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
                     {% endif %}
                 </div>
+
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.is_restaurant_owner }}
+                    </div>
+                    <div class="ml-3">
+                        <label for="{{ form.is_restaurant_owner.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.is_restaurant_owner.label }}
+                        </label>
+                        {% if form.is_restaurant_owner.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.is_restaurant_owner.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.is_restaurant_owner.help_text }}</p>
+                    </div>
+                </div>
+
+                <!-- Поля для ресторана (скрыты по умолчанию) -->
+                <div id="restaurant_fields" class="hidden space-y-4 mt-4 p-4 bg-gray-50 rounded-lg border">
+                    <h4 class="text-sm font-medium text-gray-900">Информация о ресторане</h4>
+
+                    <div>
+                        <label for="{{ form.restaurant_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.restaurant_name.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.restaurant_name }}
+                        {% if form.restaurant_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.restaurant_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.restaurant_address.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.restaurant_address.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.restaurant_address }}
+                        {% if form.restaurant_address.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.restaurant_address.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.restaurant_phone.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.restaurant_phone.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.restaurant_phone }}
+                        {% if form.restaurant_phone.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.restaurant_phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             {% if form.non_field_errors %}
@@ -128,4 +178,25 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const restaurantCheckbox = document.getElementById('restaurant_checkbox');
+    const restaurantFields = document.getElementById('restaurant_fields');
+
+    function toggleRestaurantFields() {
+        if (restaurantCheckbox.checked) {
+            restaurantFields.classList.remove('hidden');
+        } else {
+            restaurantFields.classList.add('hidden');
+        }
+    }
+
+    // Обработчик изменения состояния чекбокса
+    restaurantCheckbox.addEventListener('change', toggleRestaurantFields);
+
+    // Инициализация состояния при загрузке страницы
+    toggleRestaurantFields();
+});
+</script>
 {% endblock %} 

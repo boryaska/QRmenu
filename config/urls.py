@@ -29,7 +29,13 @@ urlpatterns = [
     
     # Аккаунты (регистрация, вход, профиль)
     path("accounts/", include("accounts.urls")),
-    
+
+    # Верификация ресторанов
+    path("verification/", include("verification.urls")),
+
+    # Каталог ресторанов для клиентов
+    path("restaurants/", include("clients.urls", namespace="clients")),
+
     # Дашборд ресторана (приватные страницы)
     path("dashboard/", include("restaurants.urls", namespace="dashboard")),
     

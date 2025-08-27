@@ -71,7 +71,13 @@ class User(AbstractUser):
         default=False,
         verbose_name="Email подтвержден"
     )
-    
+
+    is_restaurant_owner = models.BooleanField(
+        default=False,
+        verbose_name="Владелец ресторана",
+        help_text="Пользователь может регистрировать рестораны"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Дата регистрации"

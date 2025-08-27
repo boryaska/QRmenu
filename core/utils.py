@@ -6,6 +6,7 @@ from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.core.files.storage import FileSystemStorage
 import os
 
 
@@ -170,11 +171,35 @@ def slugify_filename(filename):
     """
     import re
     from django.utils.text import slugify
-    
+
     name, ext = os.path.splitext(filename)
     name = slugify(name)[:50]  # Ограничиваем длину
     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
     return f"{name}_{timestamp}{ext}"
+
+
+def generate_unique_filename(filename, prefix='file'):
+    """
+    Генерирует уникальное короткое имя файла
+
+    Args:
+        filename (str): Исходное имя файла
+        prefix (str): Префикс для имени файла
+
+    Returns:
+        str: Уникальное имя файла
+    """
+    # Получаем расширение файла
+    _, ext = os.path.splitext(filename)
+
+    # Генерируем короткий уникальный идентификатор
+    unique_id = secrets.token_hex(8)  # 16 символов
+
+    # Создаем новое имя файла
+    timestamp = timezone.now().strftime('%Y%m%d')
+    new_filename = f"{prefix}_{timestamp}_{unique_id}{ext}"
+
+    return new_filename
 
 
 def get_client_ip(request):
@@ -246,5 +271,65 @@ class FileUploadHandler:
         if file.content_type.startswith('image/'):
             validate_image_file(file)
             return resize_image(file)
-        
-        return file 
+
+        return file
+
+
+class UniqueFilenameStorage(FileSystemStorage):
+    """
+    Кастомное хранилище, которое генерирует уникальные короткие имена файлов
+    """
+
+    def get_valid_filename(self, name):
+        """
+        Возвращает валидное имя файла с уникальным префиксом
+        """
+        # Получаем директорию и имя файла
+        dir_name = os.path.dirname(name)
+        file_name = os.path.basename(name)
+
+        # Генерируем уникальное имя файла
+        unique_name = generate_unique_filename(file_name, prefix='upload')
+
+        # Собираем полный путь
+        if dir_name:
+            return os.path.join(dir_name, unique_name)
+        else:
+            return unique_name
+
+    def get_available_name(self, name, max_length=None):
+        """
+        Возвращает доступное имя файла, генерируя уникальное если нужно
+        """
+        dir_name = os.path.dirname(name)
+        file_name = os.path.basename(name)
+
+        # Если имя файла уже уникально, возвращаем его
+        if not self.exists(name):
+            return name
+
+        # Иначе генерируем новое уникальное имя
+        name_without_ext = os.path.splitext(file_name)[0]
+        ext = os.path.splitext(file_name)[1]
+
+        # Создаем новое уникальное имя
+        unique_name = generate_unique_filename(file_name, prefix='upload')
+
+        if dir_name:
+            full_name = os.path.join(dir_name, unique_name)
+        else:
+            full_name = unique_name
+
+        # Проверяем, что новое имя не превышает max_length
+        if max_length and len(full_name) > max_length:
+            # Если превышает, создаем еще более короткое имя
+            timestamp = timezone.now().strftime('%Y%m%d')
+            short_id = secrets.token_hex(4)  # 8 символов вместо 16
+            short_name = f"upload_{timestamp}_{short_id}{ext}"
+
+            if dir_name:
+                full_name = os.path.join(dir_name, short_name)
+            else:
+                full_name = short_name
+
+        return full_name 

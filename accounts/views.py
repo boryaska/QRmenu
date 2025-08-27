@@ -19,16 +19,42 @@ class SignUpView(CreateView):
     model = User
     form_class = CustomUserCreationForm
     template_name = 'accounts/signup.html'
-    success_url = reverse_lazy('dashboard:profile')
 
     def dispatch(self, request, *args, **kwargs):
         # Перенаправляем авторизованных пользователей
         if request.user.is_authenticated:
-            return redirect('dashboard:profile')
+            # Определяем куда перенаправить пользователя в зависимости от его типа
+            if request.user.is_restaurant_owner:
+                # Ресторатор - проверяем статус верификации
+                if hasattr(request.user, 'restaurant_verification'):
+                    verification = request.user.restaurant_verification
+                    if verification.status == 'approved' and hasattr(request.user, 'restaurantprofile'):
+                        return redirect('dashboard:profile')
+                    else:
+                        return redirect('verification:status')
+                else:
+                    return redirect('verification:create')
+            else:
+                # Обычный пользователь - в каталог ресторанов
+                return redirect('clients:catalog')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         response = super().form_valid(form)
+
+        # Если пользователь отметил галочку "ресторан", создаем заявку на верификацию
+        if form.cleaned_data.get('is_restaurant_owner'):
+            from verification.models import RestaurantVerification
+            # Создаем заявку на верификацию с данными из регистрации
+            RestaurantVerification.objects.create(
+                user=self.object,
+                restaurant_name=form.cleaned_data.get('restaurant_name', ''),
+                address=form.cleaned_data.get('restaurant_address', ''),
+                phone=form.cleaned_data.get('restaurant_phone', ''),
+                status='pending'
+            )
+            messages.info(self.request, 'Регистрация завершена! Ваша заявка на верификацию отправлена и будет рассмотрена в ближайшее время.')
+
         # Автоматически авторизуем пользователя после регистрации
         login(self.request, self.object)
         messages.success(self.request, 'Регистрация успешно завершена! Добро пожаловать!')
@@ -37,6 +63,19 @@ class SignUpView(CreateView):
     def form_invalid(self, form):
         messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
         return super().form_invalid(form)
+
+    def get_success_url(self):
+        """
+        Определяет URL для перенаправления после успешной регистрации
+        """
+        user = self.object
+
+        if user.is_restaurant_owner:
+            # Ресторатор - перенаправляем на статус верификации
+            return reverse_lazy('verification:status')
+        else:
+            # Обычный пользователь - в каталог ресторанов
+            return reverse_lazy('clients:catalog')
 
 
 class CustomLoginView(LoginView):
@@ -48,12 +87,34 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        # Если у пользователя есть ресторан, перенаправляем в дашборд
-        if hasattr(self.request.user, 'restaurantprofile'):
-            return reverse_lazy('dashboard:profile')
+        user = self.request.user
+
+        # Если пользователь является владельцем ресторана
+        if user.is_restaurant_owner:
+            # Проверяем статус верификации
+            if hasattr(user, 'restaurant_verification'):
+                verification = user.restaurant_verification
+                if verification.status == 'pending':
+                    # Заявка на рассмотрении - перенаправляем на статус верификации
+                    return reverse_lazy('verification:status')
+                elif verification.status == 'requires_changes':
+                    # Нужно внести изменения - перенаправляем на редактирование заявки
+                    return reverse_lazy('verification:edit')
+                elif verification.status == 'approved':
+                    # Верификация одобрена - проверяем есть ли профиль ресторана
+                    if hasattr(user, 'restaurantprofile'):
+                        return reverse_lazy('dashboard:profile')
+                    else:
+                        return reverse_lazy('dashboard:profile_create')
+                else:  # rejected
+                    # Заявка отклонена - перенаправляем на повторную подачу
+                    return reverse_lazy('verification:create')
+            else:
+                # Нет заявки на верификацию - перенаправляем на создание
+                return reverse_lazy('verification:create')
         else:
-            # Если нет ресторана, перенаправляем на создание профиля
-            return reverse_lazy('dashboard:profile_create')
+            # Обычный пользователь - перенаправляем на каталог ресторанов
+            return reverse_lazy('clients:catalog')
 
     def form_valid(self, form):
         messages.success(self.request, f'Добро пожаловать, {form.get_user().get_full_name()}!')
@@ -123,10 +184,18 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user'] = self.request.user
-        context['has_restaurant'] = hasattr(self.request.user, 'restaurantprofile')
+        user = self.request.user
+
+        # Оптимизируем запросы для связанных объектов
+        user_with_verification = user.__class__.objects.select_related(
+            'restaurantprofile',
+            'restaurant_verification'
+        ).get(pk=user.pk)
+
+        context['user'] = user_with_verification
+        context['has_restaurant'] = hasattr(user_with_verification, 'restaurantprofile')
         if context['has_restaurant']:
-            context['restaurant'] = self.request.user.restaurantprofile
+            context['restaurant'] = user_with_verification.restaurantprofile
         return context
 
 

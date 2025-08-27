@@ -39,10 +39,49 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['has_restaurant'] = hasattr(self.request.user, 'restaurantprofile')
-        
+        user = self.request.user
+
+        # Оптимизируем запросы для связанных объектов
+        user_with_related = user.__class__.objects.select_related(
+            'restaurantprofile',
+            'restaurant_verification'
+        ).get(pk=user.pk)
+
+        # Проверяем, является ли пользователь владельцем ресторана
+        context['is_restaurant_owner'] = user_with_related.is_restaurant_owner
+        context['has_restaurant'] = hasattr(user_with_related, 'restaurantprofile')
+
+        if user_with_related.is_restaurant_owner:
+            # Проверяем статус верификации
+            if hasattr(user_with_related, 'restaurant_verification'):
+                verification = user_with_related.restaurant_verification
+                context['verification'] = verification
+                context['needs_verification'] = verification.status in ['pending', 'requires_changes', 'rejected']
+
+                if verification.status == 'pending':
+                    context['verification_message'] = 'Ваша заявка на верификацию находится на рассмотрении'
+                    context['verification_status'] = 'pending'
+                elif verification.status == 'requires_changes':
+                    context['verification_message'] = 'Необходимо внести изменения в заявку'
+                    context['verification_status'] = 'changes_required'
+                elif verification.status == 'rejected':
+                    context['verification_message'] = 'Заявка была отклонена. Вы можете подать новую заявку'
+                    context['verification_status'] = 'rejected'
+                elif verification.status == 'approved':
+                    context['verification_message'] = 'Верификация пройдена успешно'
+                    context['verification_status'] = 'approved'
+            else:
+                # У пользователя нет заявки на верификацию
+                context['needs_verification'] = True
+                context['verification_message'] = 'Для работы с рестораном необходимо пройти верификацию'
+                context['verification_status'] = 'no_application'
+        else:
+            # Обычный пользователь
+            context['needs_verification'] = False
+
+        # Если есть ресторан, показываем статистику
         if context['has_restaurant']:
-            restaurant = self.request.user.restaurantprofile
+            restaurant = user_with_related.restaurantprofile
             context['restaurant'] = restaurant
             # Базовая статистика
             context['stats'] = {
@@ -51,7 +90,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'total_orders': 0,  # Заполним когда создадим модели заказов
                 'revenue_today': 0,
             }
-        
+
         return context
 
 

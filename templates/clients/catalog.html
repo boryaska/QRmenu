@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог ресторанов - QR Menu{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Заголовок и поиск -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Каталог ресторанов</h1>
+
+        <!-- Форма поиска -->
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Поиск</label>
+                    <input type="text" name="search" id="search" value="{{ search_query }}"
+                           placeholder="Название ресторана, описание..."
+                           class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Адрес</label>
+                    <input type="text" name="location" id="location" value="{{ location_query }}"
+                           placeholder="Город, район..."
+                           class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">Сортировка</label>
+                    <select name="sort" id="sort"
+                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>По названию</option>
+                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Сначала новые</option>
+                        <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>По рейтингу</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-4 flex justify-end space-x-3">
+                    <button type="submit"
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <i class="fas fa-search mr-2"></i>
+                        Найти
+                    </button>
+                    {% if search_query or location_query %}
+                    <a href="{% url 'clients:catalog' %}"
+                       class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        Сбросить
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Результаты поиска -->
+    {% if search_query or location_query %}
+    <div class="mb-6">
+        <p class="text-gray-600">
+            {% if restaurants %}
+                Найдено ресторанов: {{ restaurants|length }}
+            {% else %}
+                Рестораны не найдены. Попробуйте изменить критерии поиска.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Список ресторанов -->
+    {% if restaurants %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for restaurant in restaurants %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <!-- Логотип -->
+            <div class="h-48 bg-gray-200 flex items-center justify-center">
+                {% if restaurant.logo %}
+                    <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}"
+                         class="w-full h-full object-cover">
+                {% else %}
+                    <i class="fas fa-utensils text-4xl text-gray-400"></i>
+                {% endif %}
+            </div>
+
+            <!-- Информация о ресторане -->
+            <div class="p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ restaurant.name }}</h3>
+
+                {% if restaurant.description %}
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ restaurant.description }}</p>
+                {% endif %}
+
+                <div class="space-y-2 text-sm text-gray-500 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        <span>{{ restaurant.address }}</span>
+                    </div>
+                    {% if restaurant.phone %}
+                    <div class="flex items-center">
+                        <i class="fas fa-phone mr-2"></i>
+                        <span>{{ restaurant.phone }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Действия -->
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'clients:restaurant_detail' qr_data=restaurant.qr_data %}"
+                       class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Посмотреть меню
+                    </a>
+
+                    <div class="text-sm text-gray-500">
+                        {% with dish_count=restaurant.get_active_dishes_count %}
+                            {% if dish_count %}
+                                {{ dish_count }} блюд
+                            {% else %}
+                                Меню в разработке
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if location_query %}&location={{ location_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if location_query %}&location={{ location_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Нет ресторанов -->
+    <div class="text-center py-12">
+        <div class="text-gray-400 mb-4">
+            <i class="fas fa-search text-6xl"></i>
+        </div>
+        <h3 class="text-xl font-medium text-gray-900 mb-2">Рестораны не найдены</h3>
+        <p class="text-gray-500 mb-6">
+            {% if search_query or location_query %}
+                Попробуйте изменить критерии поиска или посмотрите все рестораны
+            {% else %}
+                В каталоге пока нет ресторанов
+            {% endif %}
+        </p>
+        {% if search_query or location_query %}
+        <a href="{% url 'clients:catalog' %}"
+           class="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700">
+            Показать все рестораны
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

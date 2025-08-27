@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator, DecimalValidator
 from core.models import TimeStampedModel
-from core.utils import generate_restaurant_qr_data
+from core.utils import generate_restaurant_qr_data, UniqueFilenameStorage
 
 
 class RestaurantProfile(TimeStampedModel):
@@ -68,6 +68,8 @@ class RestaurantProfile(TimeStampedModel):
         upload_to='restaurants/logos/',
         blank=True,
         null=True,
+        max_length=255,
+        storage=UniqueFilenameStorage(),
         verbose_name="Логотип",
         help_text="Логотип ресторана для отображения в меню"
     )
