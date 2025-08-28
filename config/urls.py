@@ -40,10 +40,10 @@ urlpatterns = [
     path("dashboard/", include("restaurants.urls", namespace="dashboard")),
     
     # Управление меню
-    path("dashboard/menu/", include("menu.urls")),
+    path("dashboard/menu/", include("menu.urls", namespace="menu")),
     
     # Управление заказами
-    path("dashboard/orders/", include("orders.urls")),
+    path("dashboard/orders/", include("orders.urls", namespace="orders")),
     
     # Публичные API (для клиентов)
     path("api/orders/", include("orders.api_urls")),

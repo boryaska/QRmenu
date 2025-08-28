@@ -24,7 +24,7 @@ class RestaurantVerificationAdmin(admin.ModelAdmin):
     )
     list_filter = ('status', 'submitted_at', 'reviewed_at')
     search_fields = ('restaurant_name', 'user__email', 'user__first_name', 'user__last_name', 'phone', 'address')
-    readonly_fields = ('submitted_at', 'reviewed_at', 'user', 'restaurant_name', 'address', 'phone', 'email', 'description')
+    readonly_fields = ('submitted_at', 'reviewed_at', 'user', 'restaurant_name', 'address', 'phone', 'email', 'description', 'user_info_display', 'document_preview')
     ordering = ('-submitted_at',)
     actions = ['approve_applications', 'reject_applications', 'request_changes']
 
@@ -34,7 +34,8 @@ class RestaurantVerificationAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Информация о ресторане', {
-            'fields': ('restaurant_name', 'description', 'address', 'phone', 'email')
+            'fields': ('restaurant_name', 'description', 'address', 'phone', 'email'),
+            'classes': ('collapse',)
         }),
         ('Документы', {
             'fields': ('document_file', 'document_preview'),

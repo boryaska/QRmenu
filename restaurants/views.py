@@ -70,6 +70,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 elif verification.status == 'approved':
                     context['verification_message'] = 'Верификация пройдена успешно'
                     context['verification_status'] = 'approved'
+                    # Для верифицированных пользователей без ресторана
+                    if not hasattr(user_with_related, 'restaurantprofile'):
+                        context['show_create_restaurant'] = True
             else:
                 # У пользователя нет заявки на верификацию
                 context['needs_verification'] = True

@@ -104,19 +104,11 @@ class RestaurantVerificationUpdateView(VerificationOwnerMixin, UpdateView):
         # Дополнительная проверка статуса
         verification = self.get_verification()
 
-        # Проверяем, является ли заявка пустой (только что созданной при регистрации)
-        is_empty_application = (
-            not verification.restaurant_name.strip() and
-            not verification.address.strip() and
-            not verification.phone.strip()
-        )
-
-        # Разрешаем редактирование если:
-        # 1. Статус requires_changes или rejected, ИЛИ
-        # 2. Статус pending и заявка пустая
-        allowed_statuses = ['requires_changes', 'rejected']
-        if verification.status == 'pending' and is_empty_application:
-            allowed_statuses.append('pending')
+        # Разрешаем редактирование для следующих статусов:
+        # - pending: можно редактировать в любое время
+        # - requires_changes: администратор попросил внести изменения
+        # - rejected: заявка отклонена, можно исправить и отправить заново
+        allowed_statuses = ['pending', 'requires_changes', 'rejected']
 
         if verification.status not in allowed_statuses:
             return redirect('verification:status')
