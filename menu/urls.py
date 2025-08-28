@@ -12,6 +12,7 @@ urlpatterns = [
     path('categories/create/', views.CategoryCreateView.as_view(), name='category_create'),
     path('categories/<int:pk>/edit/', views.CategoryUpdateView.as_view(), name='category_edit'),
     path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
+    path('categories/<int:pk>/toggle-active/', views.CategoryToggleActiveView.as_view(), name='category_toggle_active'),
     
     # Блюда
     path('dishes/', views.DishListView.as_view(), name='dishes'),

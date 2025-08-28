@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 
 from core.models import TimeStampedModel
-from core.utils import validate_image_file, slugify_filename
+from core.utils import validate_image_file, slugify_filename, UniqueFilenameStorage
 from restaurants.models import RestaurantProfile
 
 
@@ -69,6 +69,8 @@ class Category(TimeStampedModel):
         upload_to=category_image_upload_path,
         blank=True,
         null=True,
+        max_length=255,
+        storage=UniqueFilenameStorage(),
         verbose_name="Изображение",
         help_text="Изображение категории (необязательно)"
     )
@@ -174,6 +176,8 @@ class Dish(TimeStampedModel):
         upload_to=dish_image_upload_path,
         blank=True,
         null=True,
+        max_length=255,
+        storage=UniqueFilenameStorage(),
         verbose_name="Изображение",
         help_text="Фото блюда"
     )
@@ -214,11 +218,27 @@ class Dish(TimeStampedModel):
     )
     
     # Дополнительная информация
+    UNIT_CHOICES = [
+        ('g', 'г (граммы)'),
+        ('kg', 'кг (килограммы)'),
+        ('ml', 'мл (миллилитры)'),
+        ('l', 'л (литры)'),
+        ('pcs', 'шт (штуки)'),
+    ]
+
     weight = models.PositiveIntegerField(
         blank=True,
         null=True,
-        verbose_name="Вес (г)",
-        help_text="Вес порции в граммах"
+        verbose_name="Вес/Объем",
+        help_text="Вес или объем порции"
+    )
+
+    weight_unit = models.CharField(
+        max_length=5,
+        choices=UNIT_CHOICES,
+        default='g',
+        verbose_name="Единица измерения",
+        help_text="Единица измерения веса/объема"
     )
     
     cooking_time = models.PositiveIntegerField(
@@ -293,18 +313,27 @@ class Dish(TimeStampedModel):
         Валидация модели
         """
         super().clean()
-        
+
         # Проверяем, что категория принадлежит тому же ресторану
         # Получаем ресторан безопасно
         restaurant = None
         if hasattr(self, 'restaurant') and self.restaurant_id:
             restaurant = self.restaurant
-        elif self.category and self.category.restaurant:
-            restaurant = self.category.restaurant
-            
-        if self.category and restaurant:
-            if self.category.restaurant != restaurant:
-                raise ValidationError('Категория должна принадлежать тому же ресторану')
+        elif hasattr(self, 'category_id') and self.category_id:
+            # Загружаем категорию если есть category_id
+            try:
+                category = Category.objects.get(pk=self.category_id)
+                restaurant = category.restaurant
+            except Category.DoesNotExist:
+                pass
+
+        if hasattr(self, 'category_id') and self.category_id and restaurant:
+            try:
+                category = Category.objects.get(pk=self.category_id)
+                if category.restaurant != restaurant:
+                    raise ValidationError('Категория должна принадлежать тому же ресторану')
+            except Category.DoesNotExist:
+                raise ValidationError('Выбранная категория не существует')
         
         # Проверяем изображение
         if self.image:
@@ -355,6 +384,15 @@ class Dish(TimeStampedModel):
         if self.is_vegan:
             badges.append({'text': 'Веганское', 'class': 'badge-vegan'})
         return badges
+
+    def get_formatted_weight(self):
+        """
+        Возвращает отформатированный вес/объем
+        """
+        if self.weight:
+            unit_display = dict(self.UNIT_CHOICES).get(self.weight_unit, self.weight_unit)
+            return f"{self.weight} {unit_display}"
+        return None
 
 
 class DishOption(TimeStampedModel):

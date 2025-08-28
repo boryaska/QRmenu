@@ -10,6 +10,8 @@ from decimal import Decimal
 from core.mixins import RestaurantOwnerMixin, FormValidationMixin, PaginationMixin, SearchMixin
 from .models import Category, Dish, DishOption, DishIngredient
 from .forms import CategoryForm, DishForm, DishOptionForm
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 class CategoryListView(RestaurantOwnerMixin, SearchMixin, PaginationMixin, ListView):
@@ -123,18 +125,29 @@ class DishListView(RestaurantOwnerMixin, SearchMixin, PaginationMixin, ListView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.filter(restaurant=self.request.user.restaurantprofile)
-        context['selected_category'] = self.request.GET.get('category', '')
+
+        # Текущая категория для отображения
+        category_id = self.request.GET.get('category')
+        if category_id:
+            try:
+                context['current_category'] = Category.objects.get(
+                    pk=category_id,
+                    restaurant=self.request.user.restaurantprofile
+                )
+            except Category.DoesNotExist:
+                pass
+
         context['selected_available'] = self.request.GET.get('available', '')
         context['filter_popular'] = self.request.GET.get('popular', False)
         context['filter_new'] = self.request.GET.get('new', False)
         context['filter_vegetarian'] = self.request.GET.get('vegetarian', False)
-        
+
         # Статистика
         all_dishes = Dish.objects.filter(restaurant=self.request.user.restaurantprofile)
         context['total_dishes'] = all_dishes.count()
         context['available_dishes'] = all_dishes.filter(is_available=True).count()
         context['popular_dishes'] = all_dishes.filter(is_popular=True).count()
-        
+
         return context
 
 
@@ -210,18 +223,61 @@ class DishDeleteView(RestaurantOwnerMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class DishToggleAvailabilityView(RestaurantOwnerMixin, DetailView):
     """
-    Переключение доступности блюда
+    Переключение доступности блюда (AJAX)
     """
     model = Dish
-    
+
     def post(self, request, *args, **kwargs):
+        from django.http import JsonResponse
+        import json
+
         dish = self.get_object()
-        dish.is_available = not dish.is_available
+
+        # Получаем новый статус из запроса
+        try:
+            data = json.loads(request.body)
+            new_status = data.get('is_available', not dish.is_available)
+        except:
+            new_status = not dish.is_available
+
+        dish.is_available = new_status
         dish.save(update_fields=['is_available'])
-        
-        status = 'доступно' if dish.is_available else 'недоступно'
-        messages.success(request, f'Блюдо "{dish.name}" теперь {status}!')
-        
-        return redirect('menu:dishes')
+
+        return JsonResponse({
+            'success': True,
+            'is_available': dish.is_available,
+            'message': f'Блюдо "{dish.name}" теперь {"доступно" if dish.is_available else "недоступно"}!'
+        })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoryToggleActiveView(RestaurantOwnerMixin, DetailView):
+    """
+    Переключение активности категории (AJAX)
+    """
+    model = Category
+
+    def post(self, request, *args, **kwargs):
+        from django.http import JsonResponse
+        import json
+
+        category = self.get_object()
+
+        # Получаем новый статус из запроса
+        try:
+            data = json.loads(request.body)
+            new_status = data.get('is_active', not category.is_active)
+        except:
+            new_status = not category.is_active
+
+        category.is_active = new_status
+        category.save(update_fields=['is_active'])
+
+        return JsonResponse({
+            'success': True,
+            'is_active': category.is_active,
+            'message': f'Категория "{category.name}" теперь {"активна" if category.is_active else "неактивна"}!'
+        })

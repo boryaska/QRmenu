@@ -57,16 +57,52 @@
                 {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
             </div>
 
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">{{ form.price.label }} *</label>
                     {{ form.price }}
                     {% if form.price.errors %}<p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">{{ form.image.label }}</label>
-                    {{ form.image }}
-                    {% if form.image.errors %}<p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>{% endif %}
+                    <label class="block text-sm font-medium text-gray-700">{{ form.weight.label }}</label>
+                    {{ form.weight }}
+                    {% if form.weight.errors %}<p class="mt-1 text-sm text-red-600">{{ form.weight.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.weight_unit.label }}</label>
+                    {{ form.weight_unit }}
+                    {% if form.weight_unit.errors %}<p class="mt-1 text-sm text-red-600">{{ form.weight_unit.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">{{ form.image.label }}</label>
+                {{ form.image }}
+                {% if form.image.errors %}<p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Дополнительные поля -->
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.sort_order.label }}</label>
+                    {{ form.sort_order }}
+                    {% if form.sort_order.errors %}<p class="mt-1 text-sm text-red-600">{{ form.sort_order.errors.0 }}</p>{% endif %}
+                    {% if form.sort_order.help_text %}<p class="mt-1 text-sm text-gray-500">{{ form.sort_order.help_text }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.cooking_time.label }}</label>
+                    {{ form.cooking_time }}
+                    {% if form.cooking_time.errors %}<p class="mt-1 text-sm text-red-600">{{ form.cooking_time.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.calories.label }}</label>
+                    {{ form.calories }}
+                    {% if form.calories.errors %}<p class="mt-1 text-sm text-red-600">{{ form.calories.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Ингредиенты</label>
+                    {{ form.ingredients }}
+                    {% if form.ingredients.errors %}<p class="mt-1 text-sm text-red-600">{{ form.ingredients.errors.0 }}</p>{% endif %}
                 </div>
             </div>
 
@@ -80,8 +116,20 @@
                     <span class="ml-2 text-sm text-gray-700">{{ form.is_popular.label }}</span>
                 </label>
                 <label class="flex items-center">
+                    {{ form.is_new }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_new.label }}</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.is_spicy }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_spicy.label }}</span>
+                </label>
+                <label class="flex items-center">
                     {{ form.is_vegetarian }}
                     <span class="ml-2 text-sm text-gray-700">{{ form.is_vegetarian.label }}</span>
+                </label>
+                <label class="flex items-center">
+                    {{ form.is_vegan }}
+                    <span class="ml-2 text-sm text-gray-700">{{ form.is_vegan.label }}</span>
                 </label>
             </div>
 

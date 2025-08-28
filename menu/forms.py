@@ -81,7 +81,7 @@ class DishForm(forms.ModelForm):
         fields = [
             'category', 'name', 'description', 'ingredients', 'price',
             'image', 'calories', 'proteins', 'fats', 'carbohydrates',
-            'weight', 'cooking_time', 'is_popular', 'is_new', 'is_spicy',
+            'weight', 'weight_unit', 'cooking_time', 'is_popular', 'is_new', 'is_spicy',
             'is_vegetarian', 'is_vegan', 'is_available', 'sort_order'
         ]
         widgets = {
@@ -137,12 +137,20 @@ class DishForm(forms.ModelForm):
             'weight': forms.NumberInput(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
                 'min': '0',
-                'placeholder': 'грамм'
+                'placeholder': 'количество'
+            }),
+            'weight_unit': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'cooking_time': forms.NumberInput(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
                 'min': '0',
                 'placeholder': 'минут'
+            }),
+            'ingredients': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                'placeholder': 'Состав блюда (через запятую)',
+                'rows': 3
             }),
             'sort_order': forms.NumberInput(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',

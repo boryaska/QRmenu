@@ -120,6 +120,8 @@ class RestaurantProfile(TimeStampedModel):
         upload_to='restaurants/qr_codes/',
         blank=True,
         null=True,
+        max_length=255,
+        storage=UniqueFilenameStorage(),
         verbose_name="QR-код",
         help_text="Сгенерированный QR-код для меню"
     )

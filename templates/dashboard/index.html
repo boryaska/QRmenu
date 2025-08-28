@@ -205,34 +205,21 @@
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Управление меню</h3>
                 </div>
-                <div class="px-6 py-4 space-y-4">
-                    <a href="{% url 'menu:category_create' %}" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-plus text-indigo-600"></i>
+                <div class="px-6 py-4">
+                    <div class="text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-utensils text-4xl text-indigo-600"></i>
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900">Добавить категорию</p>
-                            <p class="text-sm text-gray-500">Создать новую категорию блюд</p>
-                        </div>
-                    </a>
-                    <a href="{% url 'menu:dish_create' %}" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-utensils text-green-600"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900">Добавить блюдо</p>
-                            <p class="text-sm text-gray-500">Добавить новое блюдо в меню</p>
-                        </div>
-                    </a>
-                    <a href="{% url 'menu:dishes' %}" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-edit text-yellow-600"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900">Редактировать меню</p>
-                            <p class="text-sm text-gray-500">Изменить цены и описания</p>
-                        </div>
-                    </a>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Меню ресторана</h4>
+                        <p class="text-sm text-gray-600 mb-6">
+                            Управляйте категориями и блюдами вашего меню в удобном интерфейсе
+                        </p>
+                        <a href="{% url 'menu:categories' %}"
+                           class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-sm">
+                            <i class="fas fa-list mr-2"></i>
+                            Открыть меню
+                        </a>
+                    </div>
                 </div>
             </div>
 
